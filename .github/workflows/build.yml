@@ -9,8 +9,20 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - run: chmod +x gradlew && ./gradlew assembleDebug
+      - name: Descompactar e achar o projeto
+        run: |
+          unzip -q *.zip -d src
+          DIR=$(dirname "$(find src -name 'settings.gradle*' | head -n 1)")
+          echo "PROJ=$DIR" >> $GITHUB_ENV
+          echo "Projeto encontrado em: $DIR"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+      - name: Compilar
+        working-directory: ${{ env.PROJ }}
+        run: |
+          if [ -f gradlew ]; then chmod +x gradlew && ./gradlew assembleDebug; else gradle assembleDebug; fi
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ env.PROJ }}/**/build/outputs/apk/debug/*.apk
